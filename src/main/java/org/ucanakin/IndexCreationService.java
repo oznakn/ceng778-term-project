@@ -23,7 +23,7 @@ import org.xml.sax.SAXException;
 
 public class IndexCreationService {
 
-  public void createIndex(String indexPath) throws IOException {
+  public void createIndex(String indexPath) throws IOException, ParserConfigurationException, SAXException {
     StandardAnalyzer analyzer = new StandardAnalyzer();
     IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
     IndexWriter writer = new IndexWriter(FSDirectory.open(Paths.get(indexPath)), indexWriterConfig);
@@ -66,19 +66,17 @@ public class IndexCreationService {
     return documents;
   }
 
-  private void addDocument(final File file, IndexWriter writer) {
-    try {
+  private void addDocument(final File file, IndexWriter writer)
+      throws ParserConfigurationException, IOException, SAXException {
       List<Document> documents = parse(file);
 
       for (Document document: documents) {
         writer.addDocument(document);
       }
-    } catch (Exception e){
-      e.printStackTrace();
-    }
   }
 
-  private void addDocuments(final File folder, IndexWriter writer) {
+  private void addDocuments(final File folder, IndexWriter writer)
+      throws ParserConfigurationException, IOException, SAXException {
     for (final File fileEntry : Objects.requireNonNull(folder.listFiles())) {
       if (fileEntry.isDirectory()) {
         addDocuments(fileEntry, writer);
