@@ -1,5 +1,6 @@
 package org.ucanakin;
 
+import com.robrua.nlp.bert.Bert;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -18,6 +19,12 @@ import org.apache.lucene.store.Directory;
 
 public class Main {
     public static void main(String[] args) {
+        try {
+            Bert bert = Bert.load("com/robrua/nlp/easy-bert/bert-uncased-L-12-H-768-A-12");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         try {
             String content = "hello world";
 
