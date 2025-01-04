@@ -11,6 +11,7 @@ import java.util.Objects;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -42,18 +43,15 @@ public class IndexCreationService {
 
     String content = new String(Files.readAllBytes(Paths.get(file.getPath())));
     String contentWithArray = "<root>" + content.replace("\n", "") + "</root>";
-    //System.out.println("Reading " + file.getPath());
-    //System.out.println(contentWithArray.substring(0, 100));
+    System.out.println("Indexing " + file.getPath());
 
     org.w3c.dom.Document doc = builder.parse(new InputSource(new StringReader(contentWithArray)));
-
     var rootDoc = doc.getFirstChild();
     for (int i = 0; i < rootDoc.getChildNodes().getLength(); i++) {
       Document document = new Document();
       var itemDoc = rootDoc.getChildNodes().item(i);
       for (int j = 0; j < itemDoc.getChildNodes().getLength(); j++) {
         var propDoc = itemDoc.getChildNodes().item(j);
-        //System.out.println(propDoc.getNodeName() + " ::: " + propDoc.getTextContent());
         document.add(new TextField(
             propDoc.getNodeName(),
             propDoc.getTextContent(),
@@ -68,6 +66,11 @@ public class IndexCreationService {
 
   private void addDocument(final File file, IndexWriter writer)
       throws ParserConfigurationException, IOException, SAXException {
+      // This filters out stopword.lst
+      if (!FilenameUtils.getExtension(file.getName()).equals("txt")) {
+        return;
+      }
+
       List<Document> documents = parse(file);
 
       for (Document document: documents) {
