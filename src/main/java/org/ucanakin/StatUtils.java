@@ -18,17 +18,23 @@ public class StatUtils {
       times.add((double) result.getTime());
     }
 
-    System.out.println("Precision@10 Mean: " + mean(precisions));
-    System.out.println("Recall@10 Mean: " + mean(recalls));
-    System.out.println("Time Mean (ms): " + mean(times) / 1e6);
+    System.out.println("Precision@10 Median: " + median(precisions));
+    System.out.println("Recall@10 Median: " + median(recalls));
+    System.out.println("Time Median (ms): " + median(times) / 1e6);
 
     System.out.println("Precision@10 Average: " + avg(precisions));
     System.out.println("Recall@10 Average: " + avg(recalls));
     System.out.println("Time Average (ms): " + avg(times) / 1e6);
   }
 
-  public static double mean(List<Double> values) {
-    return values.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+  public static double median(List<Double> values) {
+    values.sort(Double::compareTo);
+    int size = values.size();
+    if (size % 2 == 0) {
+      return (values.get(size / 2 - 1) + values.get(size / 2)) / 2;
+    } else {
+      return values.get(size / 2);
+    }
   }
 
   public static double avg(List<Double> values) {

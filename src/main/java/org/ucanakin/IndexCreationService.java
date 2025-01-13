@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -27,7 +28,7 @@ public class IndexCreationService {
   private final static String DOCUMENTS_PATH = "ft/all";
 
   public void createIndex(String indexPath) throws IOException, ParserConfigurationException, SAXException {
-    StandardAnalyzer analyzer = new StandardAnalyzer(getStopWords());
+    StandardAnalyzer analyzer = getAnalyzer();
     IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
     IndexWriter writer = new IndexWriter(FSDirectory.open(Paths.get(indexPath)), indexWriterConfig);
     final File folder = new File(DOCUMENTS_PATH);
@@ -36,17 +37,48 @@ public class IndexCreationService {
     writer.close();
   }
 
+  public Map<String, Boolean> getAllExistingDocumentsMap() throws IOException, ParserConfigurationException, SAXException {
+    final File folder = new File(DOCUMENTS_PATH);
+    return getExistingDocumentsMap(folder);
+  }
+
+  public static StandardAnalyzer getAnalyzer() {
+    return new StandardAnalyzer(getStopWords());
+  }
+
+  private Map<String, Boolean> getExistingDocumentsMap(File file)
+      throws ParserConfigurationException, IOException, SAXException {
+    Map<String, Boolean> existingDocumentsMap = new java.util.HashMap<>();
+
+    if (file.isDirectory()) {
+      for (final File fileEntry : Objects.requireNonNull(file.listFiles())) {
+        existingDocumentsMap.putAll(getExistingDocumentsMap(fileEntry));
+      }
+      return existingDocumentsMap;
+    }
+
+    List<Document> documents = parse(file);
+
+    for (Document document: documents) {
+      existingDocumentsMap.put(document.get("DOCNO"), true);
+    }
+
+    return existingDocumentsMap;
+  }
+
   private List<Document> parse(final File file) throws ParserConfigurationException, IOException, SAXException {
+    String content = new String(Files.readAllBytes(Paths.get(file.getPath())));
+    return getDocumentsFromXML(content);
+  }
+
+  private List<Document> getDocumentsFromXML(final String content)
+      throws ParserConfigurationException, IOException, SAXException {
     ArrayList<Document> documents = new ArrayList<>();
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     factory.setValidating(false);
     factory.setIgnoringElementContentWhitespace(true);
     DocumentBuilder builder = factory.newDocumentBuilder();
-
-
-    String content = new String(Files.readAllBytes(Paths.get(file.getPath())));
     String contentWithArray = "<root>" + content.replace("\n", "") + "</root>";
-    System.out.println("Indexing " + file.getPath());
 
     org.w3c.dom.Document doc = builder.parse(new InputSource(new StringReader(contentWithArray)));
     var rootDoc = doc.getFirstChild();
@@ -93,8 +125,8 @@ public class IndexCreationService {
     }
   }
 
-  private CharArraySet getStopWords() {
-    String stopWordsPath = DOCUMENTS_PATH + STOP_WORDS_FILENAME;
+  private static CharArraySet getStopWords() {
+    String stopWordsPath = DOCUMENTS_PATH + "/" + STOP_WORDS_FILENAME;
 
     try {
       List<String> stopWords = Files

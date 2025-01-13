@@ -40,7 +40,8 @@ public class Main {
       //indexCreationService.createIndex(INDEX_PATH);
 
       // getRelevanceMap is used to get the relevance map from the relevance files.
-      Map<Number, RelevanceObject> relevanceMap = relevanceService.getRelevanceMap(RELEVANCE_FILES);
+      Map<String, Boolean> existingDocumentsMap = indexCreationService.getAllExistingDocumentsMap();
+      Map<Number, RelevanceObject> relevanceMap = relevanceService.getRelevanceMap(RELEVANCE_FILES, existingDocumentsMap);
       searchService.searchAllQueries(INDEX_PATH, QUERY_FILES, relevanceMap);
     } catch (Exception e) {
       e.printStackTrace();

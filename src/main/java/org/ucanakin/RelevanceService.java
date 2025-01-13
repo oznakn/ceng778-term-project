@@ -7,22 +7,20 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.xml.parsers.ParserConfigurationException;
-import org.xml.sax.SAXException;
 
 public class RelevanceService {
 
-  public Map<Number, RelevanceObject> getRelevanceMap(List<String> filePaths) throws IOException {
+  public Map<Number, RelevanceObject> getRelevanceMap(List<String> filePaths, Map<String, Boolean> existingDocumentsMap) throws IOException {
     Map<Number, RelevanceObject> relevanceMap = new HashMap<>();
     for (String filePath: filePaths) {
       final File file = new File(filePath);
-      relevanceMap.putAll(parse(file));
+      relevanceMap.putAll(parse(file, existingDocumentsMap));
     }
 
     return relevanceMap;
   }
 
-  private Map<Number, RelevanceObject>  parse(final File file) throws IOException {
+  private Map<Number, RelevanceObject> parse(final File file, Map<String, Boolean> existingDocumentsMap) throws IOException {
     Map<Number, RelevanceObject> relevanceMap = new HashMap<>();
 
     String content = new String(Files.readAllBytes(Paths.get(file.getPath())));
@@ -36,14 +34,18 @@ public class RelevanceService {
       String docId = parts[2];
       String relevance = parts[3];
 
-      if (relevanceMap.containsKey(queryId)) {
-        RelevanceObject relevanceObject = relevanceMap.get(queryId);
-        relevanceObject.addRelevance(docId, relevance.equals("1"));
-      } else {
+      if (!relevanceMap.containsKey(queryId)) {
         RelevanceObject relevanceObject = new RelevanceObject(queryId);
-        relevanceObject.addRelevance(docId, relevance.equals("1"));
         relevanceMap.put(queryId, relevanceObject);
       }
+
+      // not sure if this is the right way, but I saw that there are many other documents found for queries that are not in the dataset/index
+      if (!existingDocumentsMap.containsKey(docId)) {
+        continue;
+      }
+
+      RelevanceObject relevanceObject = relevanceMap.get(queryId);
+      relevanceObject.addRelevance(docId, relevance.equals("1"));
     }
 
     return relevanceMap;

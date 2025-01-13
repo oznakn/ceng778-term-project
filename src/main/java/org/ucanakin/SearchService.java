@@ -10,11 +10,10 @@ import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.similarities.BM25Similarity;
@@ -59,7 +58,7 @@ public class SearchService {
 
   public void searchAllQueries(String indexPath, List<String> filePaths, Map<Number, RelevanceObject> relevanceMap)
       throws IOException, ParserConfigurationException, SAXException, ParseException {
-    IndexReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
+    IndexReader reader = getReader(indexPath);
     IndexSearcher searcher = new IndexSearcher(reader);
     searcher.setSimilarity(new BM25Similarity());
 
@@ -76,6 +75,10 @@ public class SearchService {
     StatUtils.printStats(results);
   }
 
+  public static IndexReader getReader(String indexPath) throws IOException {
+    return DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
+  }
+
   public ResultObject searchQuery(IndexSearcher searcher, Node node, Map<Number, RelevanceObject> relevanceMap)
       throws IOException, ParseException {
     if (node.getChildNodes().getLength() == 0) {
@@ -88,7 +91,10 @@ public class SearchService {
     title = title.replaceAll("/", "\\\\/");
     //System.out.println("Query: " + queryId + ": " + title);
 
-    QueryParser parser = new QueryParser("TEXT", new StandardAnalyzer());
+    MultiFieldQueryParser parser = new MultiFieldQueryParser(
+        new String[] {"HEADLINE", "TEXT"},
+        IndexCreationService.getAnalyzer()
+    );
     Query query = parser.parse(title);
 
     return new ResultObject(searcher, query, relevanceMap.get(queryId));
