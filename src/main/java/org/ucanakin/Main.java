@@ -41,8 +41,8 @@ public class Main {
 
       // getRelevanceMap is used to get the relevance map from the relevance files.
       Map<Number, RelevanceObject> relevanceMap = relevanceService.getRelevanceMap(RELEVANCE_FILES);
-
-      searchService.searchAllQuerties(INDEX_PATH, QUERY_FILES, relevanceMap);    } catch (Exception e) {
+      searchService.searchAllQueries(INDEX_PATH, QUERY_FILES, relevanceMap);
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }

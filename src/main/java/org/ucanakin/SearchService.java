@@ -13,13 +13,10 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.StoredFields;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.similarities.BM25Similarity;
 import org.apache.lucene.store.FSDirectory;
 import org.w3c.dom.Node;
@@ -50,7 +47,6 @@ public class SearchService {
     content = content.replace("&", "&amp;").replace("\n", "").replaceAll("(?m)^(\\s*)<(?!(top))(\\w+)>([^<]+)$", "$1<$3>$4</$3>");
 
     String contentWithArray = "<root>" + content + "</root>";
-    System.out.println("Indexing " + filePath);
 
     org.w3c.dom.Document doc = builder.parse(new InputSource(new StringReader(contentWithArray)));
     var rootDoc = doc.getFirstChild();
@@ -61,47 +57,40 @@ public class SearchService {
     return queries;
   }
 
-  public void searchAllQuerties(String indexPath, List<String> filePaths, Map<Number, RelevanceObject> relevanceMap)
+  public void searchAllQueries(String indexPath, List<String> filePaths, Map<Number, RelevanceObject> relevanceMap)
       throws IOException, ParserConfigurationException, SAXException, ParseException {
     IndexReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
     IndexSearcher searcher = new IndexSearcher(reader);
     searcher.setSimilarity(new BM25Similarity());
 
     List<Node> queries = parseFiles(filePaths);
+    List<ResultObject> results = new ArrayList<>();
 
     for (Node query: queries) {
-      searchQuery(searcher, query, relevanceMap);
+      ResultObject result = searchQuery(searcher, query, relevanceMap);
+      if (result != null) {
+        results.add(result);
+      }
     }
+
+    StatUtils.printStats(results);
   }
 
-  public void searchQuery(IndexSearcher searcher, Node node, Map<Number, RelevanceObject> relevanceMap)
+  public ResultObject searchQuery(IndexSearcher searcher, Node node, Map<Number, RelevanceObject> relevanceMap)
       throws IOException, ParseException {
     if (node.getChildNodes().getLength() == 0) {
-      return;
+      return null;
     }
 
     Number queryId = Integer.parseInt(node.getChildNodes().item(1).getFirstChild().getNodeValue().replaceAll("[^0-9]", ""));
     String title = node.getChildNodes().item(3).getFirstChild().getNodeValue().replaceAll("\n", "").trim();
 
     title = title.replaceAll("/", "\\\\/");
-    System.out.println("Query: " + queryId + ": " + title);
+    //System.out.println("Query: " + queryId + ": " + title);
 
     QueryParser parser = new QueryParser("TEXT", new StandardAnalyzer());
     Query query = parser.parse(title);
 
-    TopDocs results = searcher.search(query, 10);
-    StoredFields storedFields = searcher.storedFields();
-    RelevanceObject relevanceObject = relevanceMap.get(queryId);
-    int relevantCount = 0;
-
-    for (ScoreDoc scoreDoc : results.scoreDocs) {
-      var doc = storedFields.document(scoreDoc.doc);
-      String docNo = doc.get("DOCNO");
-      if (relevanceObject.getRelevanceMap().containsKey(docNo) && relevanceObject.getRelevanceMap().get(docNo)) {
-        relevantCount += 1;
-      }
-      System.out.println("Found: " + scoreDoc.score + " ::: " + docNo  + " ::: " + relevanceObject.getRelevanceMap().get(docNo));
-    }
-    System.out.println("Recall: " + (float) relevantCount  / relevanceObject.getRelevantDocCount() + " ::: Precision: " + (float) relevantCount / 10);
+    return new ResultObject(searcher, query, relevanceMap.get(queryId));
   }
 }
