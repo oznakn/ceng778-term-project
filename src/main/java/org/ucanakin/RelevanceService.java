@@ -12,7 +12,7 @@ import org.xml.sax.SAXException;
 
 public class RelevanceService {
 
-  public Map<Number, RelevanceObject> getRelevanceMap(List<String> filePaths) throws IOException, ParserConfigurationException, SAXException {
+  public Map<Number, RelevanceObject> getRelevanceMap(List<String> filePaths) throws IOException {
     Map<Number, RelevanceObject> relevanceMap = new HashMap<>();
     for (String filePath: filePaths) {
       final File file = new File(filePath);
