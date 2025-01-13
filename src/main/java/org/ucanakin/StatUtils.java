@@ -20,11 +20,11 @@ public class StatUtils {
 
     System.out.println("Precision@10 Mean: " + mean(precisions));
     System.out.println("Recall@10 Mean: " + mean(recalls));
-    System.out.println("Time Mean (ms): " + mean(times) / 1000);
+    System.out.println("Time Mean (ms): " + mean(times) / 1e6);
 
     System.out.println("Precision@10 Average: " + avg(precisions));
     System.out.println("Recall@10 Average: " + avg(recalls));
-    System.out.println("Time Average (ms): " + avg(times) / 1000);
+    System.out.println("Time Average (ms): " + avg(times) / 1e6);
   }
 
   public static double mean(List<Double> values) {
