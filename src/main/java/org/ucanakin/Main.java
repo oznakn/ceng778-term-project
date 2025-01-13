@@ -1,22 +1,32 @@
 package org.ucanakin;
 
-import java.nio.file.Paths;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.StoredFields;
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.similarities.BM25Similarity;
-import org.apache.lucene.store.FSDirectory;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class Main {
 
   static IndexCreationService indexCreationService = new IndexCreationService();
+  static RelevanceService relevanceService = new RelevanceService();
+  static SearchService searchService = new SearchService();
+
   private static final String INDEX_PATH = "index1";
+
+  private static final List<String> RELEVANCE_FILES = new ArrayList<>(
+      List.of(
+          "query-relJudgments/qrel_301-350_complete.txt",
+          "query-relJudgments/qrels.trec7.adhoc_350-400.txt",
+          "query-relJudgments/qrels.trec8.adhoc.parts1-5_400-450"
+      )
+  );
+
+  private static final List<String> QUERY_FILES = new ArrayList<>(
+      List.of(
+          "query-relJudgments/q-topics-org-SET1.txt",
+          "query-relJudgments/q-topics-org-SET2.txt",
+          "query-relJudgments/q-topics-org-SET3.txt"
+             )
+  );
 
   public static void main(String[] args) {
     //try {
@@ -27,22 +37,12 @@ public class Main {
 
     try {
       // createIndex is used to create the index. If index is already created, you don't need to run this.
-      indexCreationService.createIndex(INDEX_PATH);
+      //indexCreationService.createIndex(INDEX_PATH);
 
-      QueryParser parser = new QueryParser("TEXT", new StandardAnalyzer());
-      Query query = parser.parse("International Organized Crime");
+      // getRelevanceMap is used to get the relevance map from the relevance files.
+      Map<Number, RelevanceObject> relevanceMap = relevanceService.getRelevanceMap(RELEVANCE_FILES);
 
-      IndexReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(INDEX_PATH)));
-      IndexSearcher searcher = new IndexSearcher(reader);
-      searcher.setSimilarity(new BM25Similarity());
-
-      TopDocs results = searcher.search(query, 10);
-      StoredFields storedFields = searcher.storedFields();
-      for (ScoreDoc scoreDoc : results.scoreDocs) {
-        var doc = storedFields.document(scoreDoc.doc);
-        System.out.println("Found: " + scoreDoc.score + " ::: " + doc.get("DOCNO"));
-      }
-    } catch (Exception e) {
+      searchService.searchAllQuerties(INDEX_PATH, QUERY_FILES, relevanceMap);    } catch (Exception e) {
       e.printStackTrace();
     }
   }
