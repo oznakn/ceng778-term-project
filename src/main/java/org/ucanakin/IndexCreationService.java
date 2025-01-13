@@ -11,7 +11,7 @@ import java.util.Objects;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import org.apache.commons.io.FilenameUtils;
+import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -23,13 +23,16 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 public class IndexCreationService {
+  private final static String STOP_WORDS_FILENAME = "stopword.lst";
+  private final static String DOCUMENTS_PATH = "ft/all";
 
   public void createIndex(String indexPath) throws IOException, ParserConfigurationException, SAXException {
-    StandardAnalyzer analyzer = new StandardAnalyzer();
+    StandardAnalyzer analyzer = new StandardAnalyzer(getStopWords());
     IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
     IndexWriter writer = new IndexWriter(FSDirectory.open(Paths.get(indexPath)), indexWriterConfig);
-    final File folder = new File("ft/all");
+    final File folder = new File(DOCUMENTS_PATH);
     addDocuments(folder, writer);
+
     writer.close();
   }
 
@@ -52,11 +55,12 @@ public class IndexCreationService {
       var itemDoc = rootDoc.getChildNodes().item(i);
       for (int j = 0; j < itemDoc.getChildNodes().getLength(); j++) {
         var propDoc = itemDoc.getChildNodes().item(j);
-        document.add(new TextField(
+        TextField textField = new TextField(
             propDoc.getNodeName(),
             propDoc.getTextContent(),
             Field.Store.YES
-        ));
+        );
+        document.add(textField);
       }
       documents.add(document);
     }
@@ -66,8 +70,8 @@ public class IndexCreationService {
 
   private void addDocument(final File file, IndexWriter writer)
       throws ParserConfigurationException, IOException, SAXException {
-      // This filters out stopword.lst
-      if (!FilenameUtils.getExtension(file.getName()).equals("txt")) {
+
+      if (file.getName().equals(STOP_WORDS_FILENAME)) {
         return;
       }
 
@@ -89,4 +93,19 @@ public class IndexCreationService {
     }
   }
 
+  private CharArraySet getStopWords() {
+    String stopWordsPath = DOCUMENTS_PATH + STOP_WORDS_FILENAME;
+
+    try {
+      List<String> stopWords = Files
+          .readAllLines(Paths.get(stopWordsPath))
+          .stream()
+          .filter(line -> !line.equals(""))
+          .toList();
+      return new CharArraySet(stopWords, true);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return new CharArraySet(new ArrayList<>(), true);
+  }
 }
