@@ -40,3 +40,6 @@ build/
 query-relJudgments
 ft/all
 index*
+/model
+/python/venv
+__pycache__
