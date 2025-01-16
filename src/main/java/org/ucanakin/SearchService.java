@@ -113,7 +113,7 @@ public class SearchService {
     //System.out.println("Query: " + queryId + ": " + title);
 
     MultiFieldQueryParser parser = new MultiFieldQueryParser(
-        new String[] {"TEXT"},
+        new String[] {"HEADLINE", "TEXT"},
         IndexCreationService.getAnalyzer()
     );
     Query query = parser.parse(title);
