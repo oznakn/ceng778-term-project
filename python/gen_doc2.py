@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
   time1 = time.time()
 
-  for name in files[:10]:
+  for name in files:
       with open(f'../ft/all/{name}') as f:
           data = f.read()
 
