@@ -15,6 +15,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.KnnFloatVectorQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.similarities.BM25Similarity;
 import org.apache.lucene.store.FSDirectory;
@@ -75,6 +76,26 @@ public class SearchService {
     StatUtils.printStats(results);
   }
 
+  public void searchAllQueriesWithEmbeddings(String indexPath, List<String> filePaths, Map<Number, RelevanceObject> relevanceMap)
+          throws IOException, ParserConfigurationException, SAXException, ParseException {
+    IndexReader reader = getReader(indexPath);
+    IndexSearcher searcher = new IndexSearcher(reader);
+    searcher.setSimilarity(new BM25Similarity());
+
+    List<Node> queries = parseFiles(filePaths);
+    List<ResultObject> results = new ArrayList<>();
+
+    for (Node query: queries) {
+      ResultObject result = searchQueryWithEmbeddings(searcher, query, relevanceMap);
+      if (result != null) {
+        results.add(result);
+      }
+    }
+
+    StatUtils.printStats(results);
+  }
+
+
   public static IndexReader getReader(String indexPath) throws IOException {
     return DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
   }
@@ -96,6 +117,19 @@ public class SearchService {
         IndexCreationService.getAnalyzer()
     );
     Query query = parser.parse(title);
+
+    return new ResultObject(searcher, query, relevanceMap.get(queryId));
+  }
+
+  public ResultObject searchQueryWithEmbeddings(IndexSearcher searcher, Node node, Map<Number, RelevanceObject> relevanceMap)
+          throws IOException, ParseException {
+    if (node.getChildNodes().getLength() == 0) {
+      return null;
+    }
+
+    Number queryId = Integer.parseInt(node.getChildNodes().item(1).getFirstChild().getNodeValue().replaceAll("[^0-9]", ""));
+    float[] embeddings = EmbeddingService.getInstance().getQueryEmbedding(queryId);
+    KnnFloatVectorQuery query = new KnnFloatVectorQuery("EMBEDDING", embeddings, 10);
 
     return new ResultObject(searcher, query, relevanceMap.get(queryId));
   }

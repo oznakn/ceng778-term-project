@@ -36,10 +36,15 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
 .idea
+
+
+__pycache__
+
 query-relJudgments
 ft/all
 index*
 /model
 /python/venv
-__pycache__
+/python/*.json

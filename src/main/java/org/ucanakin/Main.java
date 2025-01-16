@@ -6,12 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 public class Main {
-
-  static IndexCreationService indexCreationService = new IndexCreationService();
-  static RelevanceService relevanceService = new RelevanceService();
-  static SearchService searchService = new SearchService();
-
-  private static final String INDEX_PATH = "index1";
+  private static final String INDEX_DEFAULT_PATH = "index1";
+  private static final String INDEX_EMBED_PATH = "index2";
 
   private static final List<String> RELEVANCE_FILES = new ArrayList<>(
       List.of(
@@ -29,26 +25,34 @@ public class Main {
              )
   );
 
-  public static void main(String[] args) {
-    //try {
-    //  Bert bert = Bert.load("com/robrua/nlp/easy-bert/bert-uncased-L-12-H-768-A-12");
-    //} catch (Exception e) {
-    //  e.printStackTrace();
-    //}
-
+  public static void run(String indexPath, boolean useEmbeddings) {
     try {
-      File indexFile = new File(INDEX_PATH);
+      IndexCreationService indexCreationService = new IndexCreationService(useEmbeddings);
+      RelevanceService relevanceService = new RelevanceService();
+      SearchService searchService = new SearchService();
+
+      File indexFile = new File(indexPath);
       if (!indexFile.exists()) {
         // createIndex is used to create the index. If index is already created, you don't need to run this.
-        indexCreationService.createIndex(INDEX_PATH);
+        indexCreationService.createIndex(indexPath);
       }
 
       // getRelevanceMap is used to get the relevance map from the relevance files.
       Map<String, Boolean> existingDocumentsMap = indexCreationService.getAllExistingDocumentsMap();
       Map<Number, RelevanceObject> relevanceMap = relevanceService.getRelevanceMap(RELEVANCE_FILES, existingDocumentsMap);
-      searchService.searchAllQueries(INDEX_PATH, QUERY_FILES, relevanceMap);
+
+      if (useEmbeddings) {
+        searchService.searchAllQueriesWithEmbeddings(indexPath, QUERY_FILES, relevanceMap);
+      } else {
+        searchService.searchAllQueries(indexPath, QUERY_FILES, relevanceMap);
+      }
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
+
+  public static void main(String[] args) {
+    run( INDEX_DEFAULT_PATH,false);
+    run( INDEX_EMBED_PATH,true);
   }
 }

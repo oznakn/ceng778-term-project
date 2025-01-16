@@ -16,6 +16,7 @@ import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.KnnFloatVectorField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -28,6 +29,12 @@ public class IndexCreationService {
   private final static String DOCUMENTS_PATH = "ft/all";
 
   static StandardAnalyzer standardAnalyzer = new StandardAnalyzer(getStopWords());
+
+  private boolean useEmbeddings = false;
+
+  IndexCreationService(boolean useEmbeddings) {
+    this.useEmbeddings = useEmbeddings;
+  }
 
   public void createIndex(String indexPath) throws IOException, ParserConfigurationException, SAXException {
     StandardAnalyzer analyzer = getAnalyzer();
@@ -90,13 +97,20 @@ public class IndexCreationService {
       for (int j = 0; j < itemDoc.getChildNodes().getLength(); j++) {
         var propDoc = itemDoc.getChildNodes().item(j);
         TextField textField = new TextField(
-            propDoc.getNodeName(),
-            propDoc.getTextContent(),
-            Field.Store.YES
+                propDoc.getNodeName(),
+                propDoc.getTextContent(),
+                Field.Store.YES
         );
         document.add(textField);
       }
-      documents.add(document);
+
+      if (useEmbeddings) {
+        float[] items = new float[1];
+        KnnFloatVectorField field = new KnnFloatVectorField("EMBEDDING", items);
+        document.add(field);
+
+        documents.add(document);
+      }
     }
 
     return documents;

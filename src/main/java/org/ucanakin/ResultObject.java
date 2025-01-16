@@ -4,10 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.lucene.index.StoredFields;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.*;
 
 public class ResultObject {
   List<Boolean> relevanceList;
@@ -41,6 +38,34 @@ public class ResultObject {
     precision = calculatePrecision();
     recall =
       relevanceObject.getRelevantDocCount() == 0 ? 1 : calculateRecall((double) relevanceObject.getRelevantDocCount());
+  }
+
+  public ResultObject(IndexSearcher searcher, KnnFloatVectorQuery query, RelevanceObject relevanceObject) throws IOException {
+    Long startTime = System.nanoTime();
+    TopDocs results = searcher.search(query, 10);
+    Long endTime = System.nanoTime();
+
+    time = endTime - startTime;
+
+    StoredFields storedFields = searcher.storedFields();
+
+    relevanceList = new ArrayList<>();
+
+    if (results.scoreDocs.length == 0) {
+      precision = 0.0;
+      recall = 0.0;
+      return;
+    }
+
+    for (ScoreDoc scoreDoc : results.scoreDocs) {
+      var doc = storedFields.document(scoreDoc.doc);
+      String docNo = doc.get("DOCNO");
+      relevanceList.add(relevanceObject.getRelevanceMap().get(docNo));
+    }
+
+    precision = calculatePrecision();
+    recall =
+            relevanceObject.getRelevantDocCount() == 0 ? 1 : calculateRecall((double) relevanceObject.getRelevantDocCount());
   }
 
   private int getRelevantCount() {
