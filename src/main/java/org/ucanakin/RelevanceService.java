@@ -39,8 +39,8 @@ public class RelevanceService {
         relevanceMap.put(queryId, relevanceObject);
       }
 
-      // not sure if this is the right way, but I saw that there are many other documents found for queries that are not in the dataset/index
-      if (!existingDocumentsMap.containsKey(docId)) {
+      // we only have FT documents
+      if (!docId.startsWith("FT")) {
         continue;
       }
 

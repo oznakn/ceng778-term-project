@@ -27,6 +27,8 @@ public class IndexCreationService {
   private final static String STOP_WORDS_FILENAME = "stopword.lst";
   private final static String DOCUMENTS_PATH = "ft/all";
 
+  static StandardAnalyzer standardAnalyzer = new StandardAnalyzer(getStopWords());
+
   public void createIndex(String indexPath) throws IOException, ParserConfigurationException, SAXException {
     StandardAnalyzer analyzer = getAnalyzer();
     IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
@@ -43,7 +45,7 @@ public class IndexCreationService {
   }
 
   public static StandardAnalyzer getAnalyzer() {
-    return new StandardAnalyzer(getStopWords());
+    return standardAnalyzer;
   }
 
   private Map<String, Boolean> getExistingDocumentsMap(File file)

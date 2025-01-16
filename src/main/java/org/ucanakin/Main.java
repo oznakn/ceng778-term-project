@@ -1,5 +1,6 @@
 package org.ucanakin;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,8 +37,11 @@ public class Main {
     //}
 
     try {
-      // createIndex is used to create the index. If index is already created, you don't need to run this.
-      //indexCreationService.createIndex(INDEX_PATH);
+      File indexFile = new File(INDEX_PATH);
+      if (!indexFile.exists()) {
+        // createIndex is used to create the index. If index is already created, you don't need to run this.
+        indexCreationService.createIndex(INDEX_PATH);
+      }
 
       // getRelevanceMap is used to get the relevance map from the relevance files.
       Map<String, Boolean> existingDocumentsMap = indexCreationService.getAllExistingDocumentsMap();
