@@ -22,7 +22,9 @@ for name in files:
                 if prop._name == 'DOCNO':
                     doc_id = prop.cdata
                 if prop._name == 'TEXT':
-                    text = prop.cdata
+                    text += " " + prop.cdata
+                if prop._name == "HEADLINE":
+                    text = prop.cdata + text + " "
 
             embeddings = model.encode(text)
             results[doc_id] = embeddings.tolist()

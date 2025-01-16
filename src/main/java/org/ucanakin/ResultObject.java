@@ -12,9 +12,9 @@ public class ResultObject {
   Double recall;
   Long time;
 
-  public ResultObject(IndexSearcher searcher, Query query, RelevanceObject relevanceObject) throws IOException {
+  public ResultObject(IndexSearcher searcher, Query query, RelevanceObject relevanceObject, int k) throws IOException {
     Long startTime = System.nanoTime();
-    TopDocs results = searcher.search(query, 10);
+    TopDocs results = searcher.search(query, k);
     Long endTime = System.nanoTime();
 
     time = endTime - startTime;
@@ -40,9 +40,9 @@ public class ResultObject {
       relevanceObject.getRelevantDocCount() == 0 ? 1 : calculateRecall((double) relevanceObject.getRelevantDocCount());
   }
 
-  public ResultObject(IndexSearcher searcher, KnnFloatVectorQuery query, RelevanceObject relevanceObject) throws IOException {
+  public ResultObject(IndexSearcher searcher, KnnFloatVectorQuery query, RelevanceObject relevanceObject, int k) throws IOException {
     Long startTime = System.nanoTime();
-    TopDocs results = searcher.search(query, 10);
+    TopDocs results = searcher.search(query, k);
     Long endTime = System.nanoTime();
 
     time = endTime - startTime;

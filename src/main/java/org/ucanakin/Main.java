@@ -41,10 +41,11 @@ public class Main {
       Map<String, Boolean> existingDocumentsMap = indexCreationService.getAllExistingDocumentsMap();
       Map<Number, RelevanceObject> relevanceMap = relevanceService.getRelevanceMap(RELEVANCE_FILES, existingDocumentsMap);
 
+      int k = 10;
       if (useEmbeddings) {
-        searchService.searchAllQueriesWithEmbeddings(indexPath, QUERY_FILES, relevanceMap);
+        searchService.searchAllQueriesWithEmbeddings(indexPath, QUERY_FILES, relevanceMap, k);
       } else {
-        searchService.searchAllQueries(indexPath, QUERY_FILES, relevanceMap);
+        searchService.searchAllQueries(indexPath, QUERY_FILES, relevanceMap, k);
       }
     } catch (Exception e) {
       e.printStackTrace();

@@ -57,7 +57,7 @@ public class SearchService {
     return queries;
   }
 
-  public void searchAllQueries(String indexPath, List<String> filePaths, Map<Number, RelevanceObject> relevanceMap)
+  public void searchAllQueries(String indexPath, List<String> filePaths, Map<Number, RelevanceObject> relevanceMap, int k)
       throws IOException, ParserConfigurationException, SAXException, ParseException {
     IndexReader reader = getReader(indexPath);
     IndexSearcher searcher = new IndexSearcher(reader);
@@ -67,7 +67,7 @@ public class SearchService {
     List<ResultObject> results = new ArrayList<>();
 
     for (Node query: queries) {
-      ResultObject result = searchQuery(searcher, query, relevanceMap);
+      ResultObject result = searchQuery(searcher, query, relevanceMap, k);
       if (result != null) {
         results.add(result);
       }
@@ -76,7 +76,7 @@ public class SearchService {
     StatUtils.printStats(results);
   }
 
-  public void searchAllQueriesWithEmbeddings(String indexPath, List<String> filePaths, Map<Number, RelevanceObject> relevanceMap)
+  public void searchAllQueriesWithEmbeddings(String indexPath, List<String> filePaths, Map<Number, RelevanceObject> relevanceMap, int k)
           throws IOException, ParserConfigurationException, SAXException, ParseException {
     IndexReader reader = getReader(indexPath);
     IndexSearcher searcher = new IndexSearcher(reader);
@@ -86,7 +86,7 @@ public class SearchService {
     List<ResultObject> results = new ArrayList<>();
 
     for (Node query: queries) {
-      ResultObject result = searchQueryWithEmbeddings(searcher, query, relevanceMap);
+      ResultObject result = searchQueryWithEmbeddings(searcher, query, relevanceMap, k);
       if (result != null) {
         results.add(result);
       }
@@ -100,7 +100,7 @@ public class SearchService {
     return DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
   }
 
-  public ResultObject searchQuery(IndexSearcher searcher, Node node, Map<Number, RelevanceObject> relevanceMap)
+  public ResultObject searchQuery(IndexSearcher searcher, Node node, Map<Number, RelevanceObject> relevanceMap, int k)
       throws IOException, ParseException {
     if (node.getChildNodes().getLength() == 0) {
       return null;
@@ -118,10 +118,10 @@ public class SearchService {
     );
     Query query = parser.parse(title);
 
-    return new ResultObject(searcher, query, relevanceMap.get(queryId));
+    return new ResultObject(searcher, query, relevanceMap.get(queryId), k);
   }
 
-  public ResultObject searchQueryWithEmbeddings(IndexSearcher searcher, Node node, Map<Number, RelevanceObject> relevanceMap)
+  public ResultObject searchQueryWithEmbeddings(IndexSearcher searcher, Node node, Map<Number, RelevanceObject> relevanceMap, int k)
           throws IOException, ParseException {
     if (node.getChildNodes().getLength() == 0) {
       return null;
@@ -129,8 +129,8 @@ public class SearchService {
 
     Number queryId = Integer.parseInt(node.getChildNodes().item(1).getFirstChild().getNodeValue().replaceAll("[^0-9]", ""));
     float[] embeddings = EmbeddingService.getInstance().getQueryEmbedding(queryId);
-    KnnFloatVectorQuery query = new KnnFloatVectorQuery("EMBEDDING", embeddings, 10);
+    KnnFloatVectorQuery query = new KnnFloatVectorQuery("EMBEDDING", embeddings, k);
 
-    return new ResultObject(searcher, query, relevanceMap.get(queryId));
+    return new ResultObject(searcher, query, relevanceMap.get(queryId), k);
   }
 }
