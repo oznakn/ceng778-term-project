@@ -94,6 +94,8 @@ public class IndexCreationService {
     for (int i = 0; i < rootDoc.getChildNodes().getLength(); i++) {
       Document document = new Document();
       var itemDoc = rootDoc.getChildNodes().item(i);
+      String docNo = null;
+
       for (int j = 0; j < itemDoc.getChildNodes().getLength(); j++) {
         var propDoc = itemDoc.getChildNodes().item(j);
         TextField textField = new TextField(
@@ -102,15 +104,23 @@ public class IndexCreationService {
                 Field.Store.YES
         );
         document.add(textField);
+
+        if (propDoc.getNodeName().equals("DOCNO")) {
+          docNo = propDoc.getTextContent();
+        }
       }
 
       if (useEmbeddings) {
-        float[] items = new float[1];
-        KnnFloatVectorField field = new KnnFloatVectorField("EMBEDDING", items);
-        document.add(field);
-
-        documents.add(document);
+        if (docNo == null) {
+          System.out.println("Missing embedding!!!");
+        } else {
+          float[] embeddings = EmbeddingService.getInstance().getDocumentEmbedding(docNo);
+          KnnFloatVectorField field = new KnnFloatVectorField("EMBEDDING", embeddings);
+          document.add(field);
+        }
       }
+
+      documents.add(document);
     }
 
     return documents;

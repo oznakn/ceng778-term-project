@@ -23,7 +23,7 @@ public class EmbeddingService {
     EmbeddingService() {
         try {
             queryEmbeddings = (JsonObject) new JsonParser().parse(new FileReader("python/qembeddings.json"));
-//            documentEmbeddings = (JsonObject) new JsonParser().parse(new FileReader("python/embeddings.json"));
+            documentEmbeddings = (JsonObject) new JsonParser().parse(new FileReader("python/embeddings.json"));
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -38,8 +38,8 @@ public class EmbeddingService {
         return embeddings;
     }
 
-    float[] getDocumentEmbedding(int documentId) {
-        JsonArray array = documentEmbeddings.get(Integer.toString(documentId)).getAsJsonArray();
+    float[] getDocumentEmbedding(String docNo) {
+        JsonArray array = documentEmbeddings.get(docNo).getAsJsonArray();
         float[] embeddings = new float[array.size()];
         for (int i = 0; i < embeddings.length; i++) {
             embeddings[i] = array.get(i).getAsFloat();
