@@ -12,6 +12,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.queries.function.valuesource.VectorSimilarityFunction;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.IndexSearcher;
@@ -80,7 +81,6 @@ public class SearchService {
           throws IOException, ParserConfigurationException, SAXException, ParseException {
     IndexReader reader = getReader(indexPath);
     IndexSearcher searcher = new IndexSearcher(reader);
-    searcher.setSimilarity(new BM25Similarity());
 
     List<Node> queries = parseFiles(filePaths);
     List<ResultObject> results = new ArrayList<>();

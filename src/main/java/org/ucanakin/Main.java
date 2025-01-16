@@ -41,12 +41,26 @@ public class Main {
       Map<String, Boolean> existingDocumentsMap = indexCreationService.getAllExistingDocumentsMap();
       Map<Number, RelevanceObject> relevanceMap = relevanceService.getRelevanceMap(RELEVANCE_FILES, existingDocumentsMap);
 
-      int k = 10;
       if (useEmbeddings) {
-        searchService.searchAllQueriesWithEmbeddings(indexPath, QUERY_FILES, relevanceMap, k);
+        System.out.println("Neural Method");
+        System.out.println();
       } else {
-        searchService.searchAllQueries(indexPath, QUERY_FILES, relevanceMap, k);
+        System.out.println("BM25 Method");
+        System.out.println();
       }
+
+      for (int k = 5; k <= 100; k+= 5) {
+        System.out.print("Search Top ");
+        System.out.println(k);
+
+        if (useEmbeddings) {
+          searchService.searchAllQueriesWithEmbeddings(indexPath, QUERY_FILES, relevanceMap, k);
+        } else {
+          searchService.searchAllQueries(indexPath, QUERY_FILES, relevanceMap, k);
+        }
+        System.out.println();
+      }
+      System.out.println();
     } catch (Exception e) {
       e.printStackTrace();
     }
