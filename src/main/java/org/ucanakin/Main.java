@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 public class Main {
-  private static final String INDEX_DEFAULT_PATH = "index1";
-  private static final String INDEX_EMBED_PATH = "index2";
+  private static final String BM25 = "BM25";
+  private static final String MODEL_1 = "all-mpnet-base-v2";
+  private static final String MODEL_2 = "all-MiniLM-L6-v2";
 
   private static final List<String> RELEVANCE_FILES = new ArrayList<>(
       List.of(
@@ -25,9 +26,9 @@ public class Main {
              )
   );
 
-  public static void run(String indexPath, boolean useEmbeddings) {
+  public static void run(String indexPath, String model) {
     try {
-      IndexCreationService indexCreationService = new IndexCreationService(useEmbeddings);
+      IndexCreationService indexCreationService = new IndexCreationService(model);
       RelevanceService relevanceService = new RelevanceService();
       SearchService searchService = new SearchService();
 
@@ -41,20 +42,19 @@ public class Main {
       Map<String, Boolean> existingDocumentsMap = indexCreationService.getAllExistingDocumentsMap();
       Map<Number, RelevanceObject> relevanceMap = relevanceService.getRelevanceMap(RELEVANCE_FILES, existingDocumentsMap);
 
-      if (useEmbeddings) {
-        System.out.println("Neural Method");
+      if (model != null) {
+        System.out.println("Neural Method - " + model);
         System.out.println();
       } else {
         System.out.println("BM25 Method");
         System.out.println();
       }
 
-      for (int k = 5; k <= 100; k+= 5) {
-        System.out.print("Search Top ");
-        System.out.println(k);
+      for (int k = 5; k <= 50; k+= 5) {
+        System.out.print("Search Top " + k + ": ");
 
-        if (useEmbeddings) {
-          searchService.searchAllQueriesWithEmbeddings(indexPath, QUERY_FILES, relevanceMap, k);
+        if (model != null) {
+          searchService.searchAllQueriesWithEmbeddings(indexPath, relevanceMap, k, model);
         } else {
           searchService.searchAllQueries(indexPath, QUERY_FILES, relevanceMap, k);
         }
@@ -67,7 +67,8 @@ public class Main {
   }
 
   public static void main(String[] args) {
-    run( INDEX_DEFAULT_PATH,false);
-    run( INDEX_EMBED_PATH,true);
+    run("index-" + BM25, null);
+    run("index-" + MODEL_1, MODEL_1);
+    run("index-" + MODEL_2, MODEL_2);
   }
 }

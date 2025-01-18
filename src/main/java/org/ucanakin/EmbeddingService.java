@@ -1,49 +1,70 @@
 package org.ucanakin;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Stopwatch;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Map;
 
 public class EmbeddingService {
-    private static EmbeddingService instance;
-
-    static EmbeddingService getInstance() {
-        if (instance == null) {
-            instance = new EmbeddingService();
-        }
-        return instance;
+    static EmbeddingService getInstance(Boolean willCreateIndex, String model) {
+        return new EmbeddingService(willCreateIndex, model);
     }
 
-    private JsonObject queryEmbeddings;
-    private JsonObject documentEmbeddings;
+    private Map<String, ArrayList<Double>> queryEmbeddings;
+    private Map<String, ArrayList<Double>> documentEmbeddings;
 
-    EmbeddingService() {
+    EmbeddingService(Boolean willCreateIndex, String model) {
         try {
-            queryEmbeddings = (JsonObject) new JsonParser().parse(new FileReader("python/qembeddings.json"));
-            documentEmbeddings = (JsonObject) new JsonParser().parse(new FileReader("python/embeddings.json"));
-        } catch (FileNotFoundException e) {
+            // After
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            if (willCreateIndex) {
+                Stopwatch stopwatch = Stopwatch.createStarted();
+                documentEmbeddings = mapper.readValue(new FileReader("python/" + model + "-docs.json"), Map.class);
+                System.out.println("Doc Embeddings loaded in " + stopwatch.stop());
+            } else {
+                Stopwatch stopwatch = Stopwatch.createStarted();
+                queryEmbeddings = mapper.readValue(new FileReader("python/" + model + "-queries.json"), Map.class);
+                System.out.println("Query Embeddings loaded in " + stopwatch.stop());
+            }
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    float[] getQueryEmbedding(Number queryId) {
-        JsonArray array = queryEmbeddings.get(queryId.toString()).getAsJsonArray();
-        float[] embeddings = new float[array.size()];
-        for (int i = 0; i < embeddings.length; i++) {
-            embeddings[i] = array.get(i).getAsFloat();
-        }
-        return embeddings;
+    Map<String, float[]> getAllQueryEmbeddings() {
+        return queryEmbeddings.entrySet().stream().collect(
+            java.util.stream.Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> {
+                    double[] doubleQueryEmbedding = entry.getValue().stream().mapToDouble(Double::doubleValue).toArray();
+                    float[] queryEmbedding = new float[doubleQueryEmbedding.length];
+                    for (int i = 0; i < doubleQueryEmbedding.length; i++) {
+                        queryEmbedding[i] = (float) doubleQueryEmbedding[i];
+                    }
+                    return queryEmbedding;
+                }
+            )
+        );
     }
 
-    float[] getDocumentEmbedding(String docNo) {
-        JsonArray array = documentEmbeddings.get(docNo).getAsJsonArray();
-        float[] embeddings = new float[array.size()];
-        for (int i = 0; i < embeddings.length; i++) {
-            embeddings[i] = array.get(i).getAsFloat();
-        }
-        return embeddings;
+    Map<String, float[]> getAllDocumentEmbeddings() {
+        return documentEmbeddings.entrySet().stream().collect(
+            java.util.stream.Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> {
+                    double[] doubleDocumentEmbedding = entry.getValue().stream().mapToDouble(Double::doubleValue).toArray();
+                    float[] documentEmbedding = new float[doubleDocumentEmbedding.length];
+                    for (int i = 0; i < doubleDocumentEmbedding.length; i++) {
+                        documentEmbedding[i] = (float) doubleDocumentEmbedding[i];
+                    }
+                    return documentEmbedding;
+                }
+            )
+        );
     }
 }

@@ -1,5 +1,6 @@
 package org.ucanakin;
 
+import com.google.common.base.Stopwatch;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
@@ -20,6 +21,7 @@ import org.apache.lucene.document.KnnFloatVectorField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.VectorSimilarityFunction;
 import org.apache.lucene.store.FSDirectory;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -30,18 +32,20 @@ public class IndexCreationService {
 
   static StandardAnalyzer standardAnalyzer = new StandardAnalyzer(getStopWords());
 
-  private boolean useEmbeddings = false;
+  private String model;
 
-  IndexCreationService(boolean useEmbeddings) {
-    this.useEmbeddings = useEmbeddings;
+  IndexCreationService(String model) {
+    this.model = model;
   }
 
   public void createIndex(String indexPath) throws IOException, ParserConfigurationException, SAXException {
+    Stopwatch stopwatch = Stopwatch.createStarted();
     StandardAnalyzer analyzer = getAnalyzer();
     IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
     IndexWriter writer = new IndexWriter(FSDirectory.open(Paths.get(indexPath)), indexWriterConfig);
     final File folder = new File(DOCUMENTS_PATH);
     addDocuments(folder, writer);
+    System.out.println("Index created in " + stopwatch.stop());
 
     writer.close();
   }
@@ -80,6 +84,25 @@ public class IndexCreationService {
     return getDocumentsFromXML(content);
   }
 
+  private List<Document> getDocumentsFromEmbedding(String model) {
+      Map<String, float[]> embeddings = EmbeddingService
+          .getInstance(true, model)
+          .getAllDocumentEmbeddings();
+
+      List<Document> documents = new ArrayList<>();
+
+      for (Map.Entry<String, float[]> entry: embeddings.entrySet()) {
+          Document document = new Document();
+          KnnFloatVectorField field = new KnnFloatVectorField("EMBEDDING", entry.getValue(), VectorSimilarityFunction.COSINE);
+          TextField textField = new TextField("DOCNO", entry.getKey(), Field.Store.YES);
+          document.add(textField);
+          document.add(field);
+          documents.add(document);
+      }
+
+      return documents;
+  }
+
   private List<Document> getDocumentsFromXML(final String content)
       throws ParserConfigurationException, IOException, SAXException {
     ArrayList<Document> documents = new ArrayList<>();
@@ -94,7 +117,6 @@ public class IndexCreationService {
     for (int i = 0; i < rootDoc.getChildNodes().getLength(); i++) {
       Document document = new Document();
       var itemDoc = rootDoc.getChildNodes().item(i);
-      String docNo = null;
 
       for (int j = 0; j < itemDoc.getChildNodes().getLength(); j++) {
         var propDoc = itemDoc.getChildNodes().item(j);
@@ -104,20 +126,6 @@ public class IndexCreationService {
                 Field.Store.YES
         );
         document.add(textField);
-
-        if (propDoc.getNodeName().equals("DOCNO")) {
-          docNo = propDoc.getTextContent();
-        }
-      }
-
-      if (useEmbeddings) {
-        if (docNo == null) {
-          System.out.println("Missing embedding!!!");
-        } else {
-          float[] embeddings = EmbeddingService.getInstance().getDocumentEmbedding(docNo);
-          KnnFloatVectorField field = new KnnFloatVectorField("EMBEDDING", embeddings);
-          document.add(field);
-        }
       }
 
       documents.add(document);
@@ -142,6 +150,14 @@ public class IndexCreationService {
 
   private void addDocuments(final File folder, IndexWriter writer)
       throws ParserConfigurationException, IOException, SAXException {
+    if (model != null) {
+      List<Document> documents = getDocumentsFromEmbedding(model);
+      for (Document document: documents) {
+        writer.addDocument(document);
+      }
+      return;
+    }
+
     for (final File fileEntry : Objects.requireNonNull(folder.listFiles())) {
       if (fileEntry.isDirectory()) {
         addDocuments(fileEntry, writer);

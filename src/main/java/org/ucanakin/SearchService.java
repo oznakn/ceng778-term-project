@@ -12,7 +12,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.queries.function.valuesource.VectorSimilarityFunction;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.IndexSearcher;
@@ -77,16 +76,20 @@ public class SearchService {
     StatUtils.printStats(results);
   }
 
-  public void searchAllQueriesWithEmbeddings(String indexPath, List<String> filePaths, Map<Number, RelevanceObject> relevanceMap, int k)
-          throws IOException, ParserConfigurationException, SAXException, ParseException {
+  public void searchAllQueriesWithEmbeddings(
+      String indexPath,
+      Map<Number, RelevanceObject> relevanceMap,
+      int k,
+      String model
+  ) throws IOException {
     IndexReader reader = getReader(indexPath);
     IndexSearcher searcher = new IndexSearcher(reader);
-
-    List<Node> queries = parseFiles(filePaths);
     List<ResultObject> results = new ArrayList<>();
 
-    for (Node query: queries) {
-      ResultObject result = searchQueryWithEmbeddings(searcher, query, relevanceMap, k);
+    Map<String, float[]> embeddings = EmbeddingService.getInstance(false, model).getAllQueryEmbeddings();
+
+    for (Map.Entry<String, float[]> entry: embeddings.entrySet()) {
+      ResultObject result = searchQueryWithEmbeddings(searcher, Integer.parseInt(entry.getKey()), entry.getValue(), relevanceMap, k);
       if (result != null) {
         results.add(result);
       }
@@ -118,19 +121,26 @@ public class SearchService {
     );
     Query query = parser.parse(title);
 
-    return new ResultObject(searcher, query, relevanceMap.get(queryId), k);
-  }
+    RelevanceObject relevanceObject = relevanceMap.get(queryId);
 
-  public ResultObject searchQueryWithEmbeddings(IndexSearcher searcher, Node node, Map<Number, RelevanceObject> relevanceMap, int k)
-          throws IOException, ParseException {
-    if (node.getChildNodes().getLength() == 0) {
+    if (relevanceObject == null || relevanceObject.relevantDocCount == 0) {
       return null;
     }
 
-    Number queryId = Integer.parseInt(node.getChildNodes().item(1).getFirstChild().getNodeValue().replaceAll("[^0-9]", ""));
-    float[] embeddings = EmbeddingService.getInstance().getQueryEmbedding(queryId);
-    KnnFloatVectorQuery query = new KnnFloatVectorQuery("EMBEDDING", embeddings, k);
+    return new ResultObject(searcher, query, relevanceObject, k);
+  }
 
-    return new ResultObject(searcher, query, relevanceMap.get(queryId), k);
+  public ResultObject searchQueryWithEmbeddings(IndexSearcher searcher, Number queryId, float[] embedding, Map<Number, RelevanceObject> relevanceMap, int k)
+          throws IOException {
+    KnnFloatVectorQuery query = new KnnFloatVectorQuery("EMBEDDING", embedding, k);
+
+
+    RelevanceObject relevanceObject = relevanceMap.get(queryId);
+
+    if (relevanceObject == null || relevanceObject.relevantDocCount == 0) {
+      return null;
+    }
+
+    return new ResultObject(searcher, query, relevanceObject, k);
   }
 }

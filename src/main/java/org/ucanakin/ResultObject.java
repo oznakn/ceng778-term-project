@@ -5,19 +5,19 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.lucene.index.StoredFields;
 import org.apache.lucene.search.*;
+import com.google.common.base.Stopwatch;
 
 public class ResultObject {
   List<Boolean> relevanceList;
   Double precision;
   Double recall;
   Long time;
+  Double ndcg;
 
   public ResultObject(IndexSearcher searcher, Query query, RelevanceObject relevanceObject, int k) throws IOException {
-    Long startTime = System.nanoTime();
+    Stopwatch stopwatch = Stopwatch.createStarted();
     TopDocs results = searcher.search(query, k);
-    Long endTime = System.nanoTime();
-
-    time = endTime - startTime;
+    time = stopwatch.elapsed().toNanos();
 
     StoredFields storedFields = searcher.storedFields();
 
@@ -26,12 +26,14 @@ public class ResultObject {
     if (results.scoreDocs.length == 0) {
         precision = 0.0;
         recall = 0.0;
+        ndcg = 0.0;
         return;
     }
 
     for (ScoreDoc scoreDoc : results.scoreDocs) {
         var doc = storedFields.document(scoreDoc.doc);
         String docNo = doc.get("DOCNO");
+
         relevanceList.add(relevanceObject.getRelevanceMap().get(docNo));
     }
 
@@ -41,11 +43,9 @@ public class ResultObject {
   }
 
   public ResultObject(IndexSearcher searcher, KnnFloatVectorQuery query, RelevanceObject relevanceObject, int k) throws IOException {
-    Long startTime = System.nanoTime();
+    Stopwatch stopwatch = Stopwatch.createStarted();
     TopDocs results = searcher.search(query, k);
-    Long endTime = System.nanoTime();
-
-    time = endTime - startTime;
+    time = stopwatch.elapsed().toNanos();
 
     StoredFields storedFields = searcher.storedFields();
 

@@ -18,12 +18,10 @@ public class StatUtils {
       times.add((double) result.getTime());
     }
 
-    System.out.println("Precision@10 Median: " + median(precisions));
-    System.out.println("Recall@10 Median: " + median(recalls));
-    System.out.println("Time Median (ms): " + median(times) / 1e6);
 
-    System.out.println("Precision@10 Average: " + avg(precisions));
-    System.out.println("Recall@10 Average: " + avg(recalls));
+    System.out.println("Precision" + " Average: " + avg(precisions));
+    System.out.println("Recall" + " Average: " + avg(recalls));
+    System.out.println("Time Median (ms): " + median(times) / 1e6);
     System.out.println("Time Average (ms): " + avg(times) / 1e6);
   }
 
