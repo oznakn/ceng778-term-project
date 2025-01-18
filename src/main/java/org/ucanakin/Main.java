@@ -51,7 +51,7 @@ public class Main {
       }
 
       for (int k = 5; k <= 50; k+= 5) {
-        System.out.print("Search Top " + k + ": ");
+        System.out.println("Search Top " + k + ": ");
 
         if (model != null) {
           searchService.searchAllQueriesWithEmbeddings(indexPath, relevanceMap, k, model);

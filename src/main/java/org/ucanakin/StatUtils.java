@@ -7,6 +7,7 @@ public class StatUtils {
   public static void printStats(List<ResultObject> results) {
     List<Double> precisions = new ArrayList<>();
     List<Double> recalls = new ArrayList<>();
+    List<Double> ndcgs = new ArrayList<>();
     List<Double> times = new ArrayList<>();
 
     for (ResultObject result : results) {
@@ -15,12 +16,13 @@ public class StatUtils {
       }
       precisions.add(result.getPrecision());
       recalls.add(result.getRecall());
+      ndcgs.add(result.getNdcg());
       times.add((double) result.getTime());
     }
 
-
-    System.out.println("Precision" + " Average: " + avg(precisions));
-    System.out.println("Recall" + " Average: " + avg(recalls));
+    System.out.println("Precision Average: " + avg(precisions));
+    System.out.println("Recall Average: " + avg(recalls));
+    System.out.println("NDCG Average: " + avg(ndcgs));
     System.out.println("Time Median (ms): " + median(times) / 1e6);
     System.out.println("Time Average (ms): " + avg(times) / 1e6);
   }
