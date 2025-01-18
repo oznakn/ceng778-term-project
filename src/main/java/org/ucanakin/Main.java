@@ -42,13 +42,14 @@ public class Main {
       Map<String, Boolean> existingDocumentsMap = indexCreationService.getAllExistingDocumentsMap();
       Map<Number, RelevanceObject> relevanceMap = relevanceService.getRelevanceMap(RELEVANCE_FILES, existingDocumentsMap);
 
+      System.out.println("---------------------------------");
       if (model != null) {
         System.out.println("Neural Method - " + model);
-        System.out.println();
       } else {
         System.out.println("BM25 Method");
-        System.out.println();
       }
+      System.out.println("---------------------------------");
+      System.out.println();
 
       for (int k = 5; k <= 50; k+= 5) {
         System.out.println("Search Top " + k + ": ");

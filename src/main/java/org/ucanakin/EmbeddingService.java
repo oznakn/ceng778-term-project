@@ -27,9 +27,9 @@ public class EmbeddingService {
                 documentEmbeddings = mapper.readValue(new FileReader("python/" + model + "-docs.json"), Map.class);
                 System.out.println("Doc Embeddings loaded in " + stopwatch.stop());
             } else {
-                Stopwatch stopwatch = Stopwatch.createStarted();
+                //Stopwatch stopwatch = Stopwatch.createStarted();
                 queryEmbeddings = mapper.readValue(new FileReader("python/" + model + "-queries.json"), Map.class);
-                System.out.println("Query Embeddings loaded in " + stopwatch.stop());
+                //System.out.println("Query Embeddings loaded in " + stopwatch.stop());
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
