@@ -9,6 +9,7 @@ public class Main {
   private static final String BM25 = "BM25";
   private static final String MODEL_1 = "all-mpnet-base-v2";
   private static final String MODEL_2 = "all-MiniLM-L6-v2";
+  private static final String MODEL_3 =  "multi-qa-mpnet-base-dot-v1";
 
   private static final List<String> RELEVANCE_FILES = new ArrayList<>(
       List.of(
@@ -51,13 +52,17 @@ public class Main {
       System.out.println("---------------------------------");
       System.out.println();
 
-      for (int k = 5; k <= 50; k+= 5) {
+      for (int k = 5; k <= 100; k+= 5) {
         System.out.println("Search Top " + k + ": ");
 
         if (model != null) {
-          searchService.searchAllQueriesWithEmbeddings(indexPath, relevanceMap, k, model);
+          searchService.searchAllQueriesWithEmbeddings(indexPath, relevanceMap, k, model, false);
+          searchService.searchAllQueriesWithEmbeddings(indexPath, relevanceMap, k, model, false);
+          searchService.searchAllQueriesWithEmbeddings(indexPath, relevanceMap, k, model, true);
         } else {
-          searchService.searchAllQueries(indexPath, QUERY_FILES, relevanceMap, k);
+          searchService.searchAllQueries(indexPath, QUERY_FILES, relevanceMap, k, false);
+          searchService.searchAllQueries(indexPath, QUERY_FILES, relevanceMap, k, false);
+          searchService.searchAllQueries(indexPath, QUERY_FILES, relevanceMap, k, true);
         }
         System.out.println();
       }
@@ -71,5 +76,6 @@ public class Main {
     run("index-" + BM25, null);
     run("index-" + MODEL_1, MODEL_1);
     run("index-" + MODEL_2, MODEL_2);
+    run("index-" + MODEL_3, MODEL_3);
   }
 }

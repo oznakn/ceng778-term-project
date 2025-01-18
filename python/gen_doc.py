@@ -11,8 +11,9 @@ logging.basicConfig(
     format="%(asctime)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S", level=logging.INFO, handlers=[LoggingHandler()]
 )
 
-model_name = "all-MiniLM-L6-v2"
+# model_name = "all-MiniLM-L6-v2"
 # model_name = "all-mpnet-base-v2"
+model_name = "multi-qa-mpnet-base-dot-v1"
 
 model = SentenceTransformer('sentence-transformers/' + model_name)
 

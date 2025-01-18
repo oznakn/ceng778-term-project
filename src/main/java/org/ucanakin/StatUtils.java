@@ -23,7 +23,6 @@ public class StatUtils {
     System.out.println("Precision Average: " + avg(precisions));
     System.out.println("Recall Average: " + avg(recalls));
     System.out.println("NDCG Average: " + avg(ndcgs));
-    System.out.println("Time Median (ms): " + median(times) / 1e6);
     System.out.println("Time Average (ms): " + avg(times) / 1e6);
   }
 

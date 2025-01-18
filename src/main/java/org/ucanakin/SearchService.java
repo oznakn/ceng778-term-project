@@ -57,8 +57,13 @@ public class SearchService {
     return queries;
   }
 
-  public void searchAllQueries(String indexPath, List<String> filePaths, Map<Number, RelevanceObject> relevanceMap, int k)
-      throws IOException, ParserConfigurationException, SAXException, ParseException {
+  public void searchAllQueries(
+      String indexPath,
+      List<String> filePaths,
+      Map<Number, RelevanceObject> relevanceMap,
+      int k,
+      Boolean printStats
+    ) throws IOException, ParserConfigurationException, SAXException, ParseException {
     IndexReader reader = getReader(indexPath);
     IndexSearcher searcher = new IndexSearcher(reader);
     searcher.setSimilarity(new BM25Similarity());
@@ -73,14 +78,17 @@ public class SearchService {
       }
     }
 
-    StatUtils.printStats(results);
+    if (printStats) {
+      StatUtils.printStats(results);
+    }
   }
 
   public void searchAllQueriesWithEmbeddings(
       String indexPath,
       Map<Number, RelevanceObject> relevanceMap,
       int k,
-      String model
+      String model,
+      Boolean printStats
   ) throws IOException {
     IndexReader reader = getReader(indexPath);
     IndexSearcher searcher = new IndexSearcher(reader);
@@ -95,7 +103,9 @@ public class SearchService {
       }
     }
 
-    StatUtils.printStats(results);
+    if (printStats) {
+      StatUtils.printStats(results);
+    }
   }
 
 
@@ -133,8 +143,6 @@ public class SearchService {
   public ResultObject searchQueryWithEmbeddings(IndexSearcher searcher, Number queryId, float[] embedding, Map<Number, RelevanceObject> relevanceMap, int k)
           throws IOException {
     KnnFloatVectorQuery query = new KnnFloatVectorQuery("EMBEDDING", embedding, k);
-
-
     RelevanceObject relevanceObject = relevanceMap.get(queryId);
 
     if (relevanceObject == null || relevanceObject.relevantDocCount == 0) {
