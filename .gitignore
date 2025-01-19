@@ -42,6 +42,7 @@ build/
 
 __pycache__
 
+*.zip
 query-relJudgments
 ft/all
 index*
